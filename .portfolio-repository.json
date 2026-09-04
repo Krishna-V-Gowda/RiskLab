@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "owner": "Krishna-V-Gowda",
+  "repository": "RiskLab",
+  "managed_by": "KVG_LAB_FINAL",
+  "public_intent": true,
+  "role": "flagship",
+  "identity": "robust portfolio allocation under controlled uncertainty",
+  "version": "0.1.0"
+}

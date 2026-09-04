@@ -1,0 +1,12 @@
+{
+  "max_abs_covariance_difference": 0.0,
+  "n_features": 7,
+  "n_samples": 200,
+  "note": "Independent development-time cross-check; scikit-learn is not a runtime dependency.",
+  "numpy_version": "2.3.5",
+  "ours_shrinkage": 1.0,
+  "relative_frobenius_difference": 0.0,
+  "seed": 123,
+  "sklearn_shrinkage": 1.0,
+  "sklearn_version": "1.8.0"
+}
