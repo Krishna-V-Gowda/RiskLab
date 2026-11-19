@@ -9,10 +9,20 @@ permissions:
 
 jobs:
   test:
+    name: verify (${{ matrix.blas_kernel }} BLAS kernels)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # GitHub runners mix Intel and AMD CPUs, and OpenBLAS picks different kernels
+        # for each. Running the runner's native kernels plus the AVX2 Haswell and Zen
+        # kernels (available on every runner) proves the evidence reproduces across them.
+        blas_kernel: [native, Haswell, Zen]
+    env:
+      OPENBLAS_CORETYPE: ${{ matrix.blas_kernel != 'native' && matrix.blas_kernel || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.13"
           cache: pip
