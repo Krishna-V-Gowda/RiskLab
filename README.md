@@ -70,7 +70,7 @@ make verify     # tests + deterministic rerun + full evidence reproduction + sec
 make experiment # full four-scenario experiment and evidence bundle
 ```
 
-The full experiment is deterministic for the pinned environment and seed. Runtime and environment metadata remain in `results.json`; volatile fields are excluded when the verifier compares semantic outputs.
+The full experiment is deterministic for the pinned environment and seed. On a different CPU, NumPy can round the last bit of some floating-point results differently, so `make verify` reruns the full experiment and compares every published number with a relative tolerance of 1e-7; byte fingerprints such as `returns_sha256` are reported but may differ between machines. Runtime and environment metadata remain in `results.json` and are excluded from the comparison.
 
 ## Repository map
 
