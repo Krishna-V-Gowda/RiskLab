@@ -13,10 +13,10 @@ fi
 rm -rf "$WORK"
 mkdir -p "$WORK/first" "$WORK/second"
 
-printf '%s\n' '[1/6] unit, numerical, temporal-integrity and reduced E2E tests'
+printf '%s\n' '[1/7] unit, numerical, temporal-integrity and reduced E2E tests'
 "$PYTHON_BIN" -m unittest discover -s tests -v
 
-printf '%s\n' '[2/6] source compilation without bytecode residue'
+printf '%s\n' '[2/7] source compilation without bytecode residue'
 "$PYTHON_BIN" - "$ROOT" <<'PY'
 from pathlib import Path
 import sys
@@ -27,11 +27,11 @@ for path in paths:
 print(f'compiled {len(paths)} Python files')
 PY
 
-printf '%s\n' '[3/6] reduced end-to-end run twice'
+printf '%s\n' '[3/7] reduced end-to-end run twice'
 "$PYTHON_BIN" -m risklab.cli run --output-dir "$WORK/first" --days 300 --assets 5 --bootstrap-resamples 30 --scenario-limit 1 >/dev/null
 "$PYTHON_BIN" -m risklab.cli run --output-dir "$WORK/second" --days 300 --assets 5 --bootstrap-resamples 30 --scenario-limit 1 >/dev/null
 
-printf '%s\n' '[4/6] semantic determinism check'
+printf '%s\n' '[4/7] semantic determinism check'
 "$PYTHON_BIN" - "$WORK/first/results.json" "$WORK/second/results.json" <<'PY'
 import json, sys
 from pathlib import Path
@@ -46,7 +46,7 @@ if load(sys.argv[1]) != load(sys.argv[2]):
 print('semantic outputs are identical')
 PY
 
-printf '%s\n' '[5/6] first-party credential and private-key scan'
+printf '%s\n' '[5/7] first-party credential and private-key scan'
 "$PYTHON_BIN" - "$ROOT" <<'PY'
 import re, sys
 from pathlib import Path
@@ -73,7 +73,25 @@ for path in root.rglob('*'):
 print('no credential patterns detected')
 PY
 
-printf '%s\n' '[6/6] source-tree residue guard'
+printf '%s\n' '[6/7] full experiment reproduces the retained evidence'
+mkdir -p "$WORK/full"
+"$PYTHON_BIN" -m risklab.cli run --output-dir "$WORK/full" --bootstrap-resamples 500 >/dev/null
+cmp "$WORK/full/summary.csv" "$ROOT/evidence/final/summary.csv"
+"$PYTHON_BIN" - "$WORK/full/results.json" "$ROOT/evidence/final/results.json" <<'PY'
+import json, sys
+from pathlib import Path
+
+def load(path):
+    value=json.loads(Path(path).read_text())
+    value.pop('runtime_seconds',None)
+    value.pop('environment',None)
+    return value
+if load(sys.argv[1]) != load(sys.argv[2]):
+    raise SystemExit('the full experiment no longer reproduces evidence/final/results.json')
+print('evidence/final/summary.csv and results.json reproduced exactly')
+PY
+
+printf '%s\n' '[7/7] source-tree residue guard'
 if find "$ROOT" -type d \( -name __pycache__ -o -name .pytest_cache -o -name .verification -o -name .publisher-venv -o -name .venv -o -name node_modules -o -name .next -o -name build -o -name dist \) -print -quit | grep -q .; then
   echo 'generated residue detected in source tree' >&2
   exit 1

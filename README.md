@@ -54,8 +54,10 @@ The final four-scenario run used 1,800 synthetic daily observations across eight
 | Base scenario | Ann. volatility | Maximum drawdown | One-way turnover | Optimizer failures |
 |---|---:|---:|---:|---:|
 | Equal weight | 16.12% | -68.55% | 1.25 | 0 |
+| Inverse volatility | 15.06% | -64.95% | 1.44 | 0 |
 | Sample minimum variance | 12.61% | -57.45% | 3.39 | 0 |
 | OAS minimum variance | 12.62% | -57.39% | 3.44 | 0 |
+| Risk parity | 14.53% | -63.53% | 1.64 | 0 |
 | Minimum CVaR | 12.90% | -58.19% | 7.03 | 0 |
 
 A shorter 126-day estimation window raised sample-minimum-variance turnover from 3.39 to 6.28, while OAS and empirical minimum variance remained nearly indistinguishable on this particular path. Those are findings about the retained simulation, not claims of market superiority. Inspect the complete metrics and intervals in [`evidence/final/report.md`](evidence/final/report.md).
@@ -64,7 +66,7 @@ A shorter 126-day estimation window raised sample-minimum-variance turnover from
 
 ```bash
 make test       # unit, numerical, temporal-integrity, and reduced E2E tests
-make verify     # tests + deterministic rerun + compilation + secret scan
+make verify     # tests + deterministic rerun + full evidence reproduction + secret scan
 make experiment # full four-scenario experiment and evidence bundle
 ```
 
