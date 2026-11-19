@@ -76,19 +76,62 @@ PY
 printf '%s\n' '[6/7] full experiment reproduces the retained evidence'
 mkdir -p "$WORK/full"
 "$PYTHON_BIN" -m risklab.cli run --output-dir "$WORK/full" --bootstrap-resamples 500 >/dev/null
-cmp "$WORK/full/summary.csv" "$ROOT/evidence/final/summary.csv"
-"$PYTHON_BIN" - "$WORK/full/results.json" "$ROOT/evidence/final/results.json" <<'PY'
-import json, sys
+"$PYTHON_BIN" - "$WORK/full" "$ROOT/evidence/final" <<'PY'
+import csv, json, math, sys
 from pathlib import Path
 
-def load(path):
-    value=json.loads(Path(path).read_text())
-    value.pop('runtime_seconds',None)
-    value.pop('environment',None)
+# Floating-point results can differ in the last few bits between CPUs and BLAS builds,
+# so numbers are compared with a tight relative tolerance; everything else must match exactly.
+REL, ABS = 1e-7, 1e-10
+fresh, retained = Path(sys.argv[1]), Path(sys.argv[2])
+worst = 0.0
+
+def same(a, b, where):
+    global worst
+    if isinstance(a, bool) or isinstance(b, bool) or not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+        if isinstance(a, dict) and isinstance(b, dict):
+            if a.keys() != b.keys():
+                raise SystemExit(f'{where}: keys differ')
+            for key in a:
+                same(a[key], b[key], f'{where}.{key}')
+            return
+        if isinstance(a, list) and isinstance(b, list):
+            if len(a) != len(b):
+                raise SystemExit(f'{where}: lengths differ')
+            for index, (x, y) in enumerate(zip(a, b)):
+                same(x, y, f'{where}[{index}]')
+            return
+        if a != b:
+            raise SystemExit(f'{where}: {a!r} != {b!r}')
+        return
+    if math.isnan(a) or math.isnan(b):
+        if not (math.isnan(a) and math.isnan(b)):
+            raise SystemExit(f'{where}: {a} != {b}')
+        return
+    if not math.isclose(a, b, rel_tol=REL, abs_tol=ABS):
+        raise SystemExit(f'{where}: {a} != {b}')
+    if a != b:
+        worst = max(worst, abs(a - b) / max(abs(b), ABS))
+
+def number(text):
+    try:
+        return float(text)
+    except ValueError:
+        return text
+
+def rows(path):
+    with open(path, newline='') as handle:
+        return [{key: number(value) for key, value in row.items()} for row in csv.DictReader(handle)]
+
+def results(path):
+    value = json.loads(Path(path).read_text())
+    value.pop('runtime_seconds', None)
+    value.pop('environment', None)
     return value
-if load(sys.argv[1]) != load(sys.argv[2]):
-    raise SystemExit('the full experiment no longer reproduces evidence/final/results.json')
-print('evidence/final/summary.csv and results.json reproduced exactly')
+
+same(rows(fresh / 'summary.csv'), rows(retained / 'summary.csv'), 'summary.csv')
+same(results(fresh / 'results.json'), results(retained / 'results.json'), 'results.json')
+print(f'evidence/final reproduced (largest relative difference {worst:.1e}, tolerance {REL:.0e})')
 PY
 
 printf '%s\n' '[7/7] source-tree residue guard'
